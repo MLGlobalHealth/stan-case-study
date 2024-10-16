@@ -1,4 +1,5 @@
 # Stan Case Study
+[![DOI](https://zenodo.org/badge/854074900.svg)](https://doi.org/10.5281/zenodo.13939394)
 
 This repository contains the case study: *Interacting with external C++ and implementing distributions with analytic derivatives in Stan*.
 
@@ -26,5 +27,6 @@ When using this work, please cite it as follows.
   howpublished = {\url{https://github.com/MLGlobalHealth/stan-case-study}},
   url = {https://github.com/MLGlobalHealth/stan-case-study}
   note = {GitHub repository},
+  doi = {10.5281/zenodo.13939394}
 }
 ```
