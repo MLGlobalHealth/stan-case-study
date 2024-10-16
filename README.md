@@ -25,8 +25,8 @@ When using this work, please cite it as follows.
   month = {9},
   year = {2024},
   howpublished = {\url{https://github.com/MLGlobalHealth/stan-case-study}},
-  url = {https://github.com/MLGlobalHealth/stan-case-study}
+  url = {https://github.com/MLGlobalHealth/stan-case-study},
   note = {GitHub repository},
-  doi = {10.5281/zenodo.13939394}
+  doi = {10.5281/zenodo.13939394},
 }
 ```
