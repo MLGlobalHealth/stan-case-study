@@ -218,8 +218,8 @@ This distribution can be coded directly in Stan
 
 ``` {.Stan language="Stan" style="lgeneral"}
 real beta_neg_binomial_lpmf(int y, real r, real a, real b) {
-  real lprobs = lgamma(y+1/b) + lbeta(y+r*b/a, 1/a+1/b+1)
-                            - lgamma(y+1) - lgamma(1/b) - lbeta(r*b/a, 1/a+1);
+  real lprobs = lgamma(y+b) + lbeta(y+r, a+b)
+                            - lgamma(y+1) - lgamma(b) - lbeta(r, a);
   return lprobs;
 }
 ...
@@ -235,7 +235,7 @@ real beta_neg_binomial_lpmf(array[] int y, real r, real a, real b) {
   int N = size(y);
   vector[N] lprobs;
   for (i in 1:N) {
-    lprobs[i] = lgamma(y[i]+1/b) + lbeta(y[i]+r*b/a, 1/a+1/b+1) - lgamma(y[i]+1) - lgamma(1/b) - lbeta(r*b/a, 1/a+1);
+    lprobs[i] = lgamma(y[i]+b) + lbeta(y[i]+r, a+b) - lgamma(y[i]+1) - lgamma(b) - lbeta(r, a);
   }
   return sum(lprobs);
 }
@@ -1003,7 +1003,6 @@ $$\begin{aligned}
 
 We ran 1000 iterations on one chain, the table below shows the parameter estimation and performance comparison. The forward time represents the time spent on the forward pass of the model calculation (statements without automatic differentiation), including evaluating the logarithmic pdf/pmf, etc. The reverse time is the time it takes to compute the reverse pass of the gradient in the context of automatic differentiation. The total time is the sum of these two plus some overhead. The chain stacks represent the number of objects on the stack allocated for chained automatic differentiation. No chain stack represents storage consumed by computations that do not require differentiation. Autodif‌f calls (No autodiff calls) is the number of executions of the `profile` command in the code block with (without) automatic differentiation[^1].
 
-```
   **Metric**          **With C++**                    **Pure Stan**
   ------------------- ------------------------------- ----------------------------------
   *Likelihood*                                        
@@ -1028,6 +1027,5 @@ We ran 1000 iterations on one chain, the table below shows the parameter estimat
   $\hat \beta$        0.568                           0.573
 
   : Performance analysis comparison between C++ analytic derivative implementation and Stan's built-in automatic differentiation implementation.
-```
 
 [^1]: <https://mc-stan.org/docs/cmdstan-guide/stan_csv.html>
