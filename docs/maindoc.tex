@@ -131,7 +131,7 @@
 \section{Introduction}
 
 
-This case study aims to provide a comprehensive example of implementing analytic derivatives using Stan's external C++ interface. By avoiding automatic differentiation, we can significantly accelerate computation. Moreover, by leveraging template functions, we achieve a level of abstraction that is not directly supported in Stan. The focus of this article is on demonstrating the process of implementing a custom probability distribution in Stan, covering both the mathematical and technical aspects. This article is generally intended for statisticians with some C++ experience. 
+This case study aims to provide a comprehensive example of implementing analytic derivatives using Stan's external C++ interface. By avoiding automatic differentiation, we can significantly accelerate computation. Moreover, by leveraging template functions, we achieve a level of abstraction that is not directly supported in Stan. The focus of this article is on demonstrating the process of implementing a custom probability distribution in Stan, covering both the mathematical and technical aspects. This article is generally intended for statisticians with some C++ experience.
 
 Throughout this case study, we will also explain aspects of Stan's gradient interface. Stan's reverse-mode automatic differentiation completely eliminates the burden of manually implementing derivatives. However, as noted in \href{https://github.com/stan-dev/stan/wiki/Contributing-to-Stan-Without-C-Plus-Plus--Experience}{Stan's developer wiki}, there are still several probability functions in Stan that lack derivative implementations. These gaps can become performance bottlenecks for certain programs. With the involvement of individuals with strong mathematical backgrounds, the Stan Math Library has substantial potential for further improvement in this area.
 
@@ -310,10 +310,10 @@ change_namespace <- function(stan_name, user_header) {
 
 Now that we understand how to call external C++ code from Stan, it's important to note that if we merely "translate" what is possible in Stan into C++, there will be minimal differences when the compiler processes it. The real benefit of using C++ lies in enabling functionalities not yet available in Stan, utilizing its extensive third-party libraries, and taking advantage of new language features. Below are some common feature requests:
 
-\begin{enumerate} 
-\item C++ has a more mature ecosystem, providing better support for niche mathematical functions that are not yet fully integrated into Stan. Expecting these functions to be included in Stan's core would place an unreasonable burden on its developers. 
-\item C++ offers advanced abstractions, whereas Stan is more constrained linguistically. For instance, template functions allow the same algorithm to be applied to different data types, which can significantly reduce development time, especially in production environments. 
-\item Stan currently lacks gradient interfaces. If one has an analytical gradient and wants to avoid the overhead of automatic differentiation, using external C++ code is the only viable option. 
+\begin{enumerate}
+\item C++ has a more mature ecosystem, providing better support for niche mathematical functions that are not yet fully integrated into Stan. Expecting these functions to be included in Stan's core would place an unreasonable burden on its developers.
+\item C++ offers advanced abstractions, whereas Stan is more constrained linguistically. For instance, template functions allow the same algorithm to be applied to different data types, which can significantly reduce development time, especially in production environments.
+\item Stan currently lacks gradient interfaces. If one has an analytical gradient and wants to avoid the overhead of automatic differentiation, using external C++ code is the only viable option.
 \end{enumerate}
 
 To illustrate how these issues arise, are analyzed, and subsequently resolved, let's begin with a concrete example.
@@ -373,8 +373,8 @@ parameters {
 This distribution can be coded directly in Stan
 \begin{lstlisting}[language=Stan, style=lgeneral]
 real beta_neg_binomial_lpmf(int y, real r, real a, real b) {
-  real lprobs = lgamma(y+1/b) + lbeta(y+r*b/a, 1/a+1/b+1)
-  							- lgamma(y+1) - lgamma(1/b) - lbeta(r*b/a, 1/a+1);
+  real lprobs = lgamma(y+b) + lbeta(y+r, a+b)
+  							- lgamma(y+1) - lgamma(b) - lbeta(r, a);
   return lprobs;
 }
 ...
@@ -388,7 +388,7 @@ real beta_neg_binomial_lpmf(array[] int y, real r, real a, real b) {
   int N = size(y);
   vector[N] lprobs;
   for (i in 1:N) {
-    lprobs[i] = lgamma(y[i]+1/b) + lbeta(y[i]+r*b/a, 1/a+1/b+1) - lgamma(y[i]+1) - lgamma(1/b) - lbeta(r*b/a, 1/a+1);
+    lprobs[i] = lgamma(y[i]+b) + lbeta(y[i]+r, a+b) - lgamma(y[i]+1) - lgamma(b) - lbeta(r, a);
   }
   return sum(lprobs);
 }
@@ -415,7 +415,7 @@ Using external C++ allows us to write the function once, but automatically adapt
 
 \subsection{Calculate derivatives}
 
-To fully implement a distribution in Stan, it is often desirable to mathematically derive certain derivatives and include them as well. Generally speaking, suppose we have a target distribution \( f(y) \), whose probability density function (pdf) or probability mass function (pmf), cumulative distribution function (cdf), and complementary cumulative distribution function (ccdf) are denoted by \( f(y, \boldsymbol\theta) \), \( F(y, \boldsymbol\theta) \), and \( C(y, \boldsymbol\theta) \), respectively, where \( \boldsymbol\theta \) is the parameter vector. Our goal is to compute the derivatives of these functions with respect to the distribution parameters, especially after taking the logarithm of the pdf or pmf: 
+To fully implement a distribution in Stan, it is often desirable to mathematically derive certain derivatives and include them as well. Generally speaking, suppose we have a target distribution \( f(y) \), whose probability density function (pdf) or probability mass function (pmf), cumulative distribution function (cdf), and complementary cumulative distribution function (ccdf) are denoted by \( f(y, \boldsymbol\theta) \), \( F(y, \boldsymbol\theta) \), and \( C(y, \boldsymbol\theta) \), respectively, where \( \boldsymbol\theta \) is the parameter vector. Our goal is to compute the derivatives of these functions with respect to the distribution parameters, especially after taking the logarithm of the pdf or pmf:
 \begin{equation}
 \log f(y, \boldsymbol\theta)
 \end{equation}
